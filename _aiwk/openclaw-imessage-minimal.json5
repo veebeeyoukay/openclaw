@@ -1,0 +1,78 @@
+// OpenClaw minimal config: Mac Mini iMessage receiver/conduit agent
+// Date: 2026-02-16
+// Copy to ~/.openclaw/openclaw.json and fill in YOUR_* placeholders
+//
+// Role: Receive requests via iMessage, feed info from other agents back to user.
+// Limited "do anything" — no exec, browser, file tools, gateway, etc.
+//
+// PHASE C SECURITY NOTES:
+// - Ensure file permissions: chmod 600 ~/.openclaw/openclaw.json (BB-4)
+// - Single-account login required: only vikasplanbhatia should be logged in (BB-1, BB-2)
+// - BlueBubbles password should be 32+ chars: openssl rand -hex 32 (BB-3)
+
+{
+  gateway: {
+    mode: "local",
+    bind: "loopback",
+    port: 18789,
+    auth: { mode: "token", token: "YOUR_LONG_RANDOM_TOKEN" },
+  },
+  plugins: {
+    // Only load iMessage channel; strips telegram, discord, slack, etc.
+    allow: ["bluebubbles"],
+    // Or for legacy imsg: allow: ["imessage"]
+    // Bundled plugins auto-enable despite allowlist (CHAN-3); deny explicitly:
+    deny: ["device-pair", "phone-control", "talk-voice"],
+  },
+  channels: {
+    web: { enabled: false },
+    bluebubbles: {
+      enabled: true,
+      serverUrl: "http://127.0.0.1:1234",
+      // BB-3: Use 32+ char password: openssl rand -hex 32
+      password: "YOUR_BLUEBUBBLES_PASSWORD",
+      webhookPath: "/bluebubbles-webhook",
+      dmPolicy: "pairing",
+      allowFrom: [],
+      // groupPolicy: "allowlist",
+      // groupAllowFrom: [],
+      // BB-5: Leave mediaLocalRoots empty (default) to disable local file access
+      // mediaLocalRoots: [],
+    },
+  },
+  tools: {
+    profile: "messaging",
+    allow: ["sessions_spawn", "subagents", "agents_list"],
+    deny: [
+      "exec",
+      "process",
+      "read",
+      "write",
+      "edit",
+      "apply_patch",
+      "browser",
+      "canvas",
+      "nodes",
+      "cron",
+      "gateway",
+      "web_search",
+      "web_fetch",
+      "image",
+    ],
+    // CRITICAL: Elevated mode bypasses ALL approvals (TOOL-1, EXEC-2)
+    elevated: { enabled: false },
+    sessions: { visibility: "tree" },
+  },
+  agents: {
+    defaults: {
+      sandbox: {
+        mode: "all",
+        scope: "agent",
+        workspaceAccess: "none",
+      },
+    },
+  },
+  logging: {
+    redactSensitive: "tools",
+  },
+}

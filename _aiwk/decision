@@ -1,0 +1,21 @@
+2026-02-16: iMessage-only Mac Mini receiver agent
+
+Choices:
+- plugins.allow over extensions dir removal: Config-driven is reversible, auditable; dir removal is defense-in-depth.
+- BlueBubbles over legacy imsg: Docs recommend BlueBubbles for new setups; imsg is legacy.
+- tools.profile: "messaging" + explicit deny: Balances conduit needs (sessions_*, message) with minimal blast radius.
+- sandbox workspaceAccess: "none": Agent has no filesystem; tool escapes have nowhere to write.
+- sessions visibility: "tree": Limits session browsing to current + spawned; avoids cross-agent leakage.
+
+2026-02-16: Phase B Audit Key Decisions
+
+Critical mitigations (P0):
+- elevated.enabled: false — Bypasses ALL approval checks if true (TOOL-1, EXEC-2)
+- deny: ["exec", "process", "apply_patch"] — Shell injection RCE vector (EXEC-1)
+- bind: "loopback" — Custom bind silently falls back to 0.0.0.0 (NET-1)
+- 32+ char token — No entropy validation exists (AUTH-1)
+
+Additional hardening:
+- deny bundled plugins: ["device-pair", "phone-control", "talk-voice"] — Auto-enable despite allowlist (CHAN-3)
+- avoid extraSystemPrompt — Direct prompt injection vector (PROMPT-1)
+- validate ownerNumbers format — Newline injection possible (PROMPT-2)
