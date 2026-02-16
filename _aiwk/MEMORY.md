@@ -20,6 +20,12 @@ Context and decisions for AI assistants working on this deployment.
 - **Operator Account:** `vikasplanbhatia` (separate iCloud for iMessage)
 - **Admin Account:** `vbadmin` (NOT logged in during operation)
 - **Security Model:** Single-account login required
+- **External Storage:** Raycue M4 dock + 1TB NVMe → `/Volumes/AgentStorage`
+
+### Storage Strategy
+- **Internal:** Config, credentials (must survive dock disconnect)
+- **NVMe (symlinked):** `~/agents/`, `~/.ollama/models/`, `~/.openclaw/logs/`
+- **Rationale:** Graceful degradation if dock disconnects
 
 ### Services (All localhost only)
 | Service | Port | Status |

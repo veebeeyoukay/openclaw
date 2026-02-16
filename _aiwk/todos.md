@@ -27,6 +27,12 @@
 - [ ] Verify webhook: `openclaw channels status --probe`
 - [ ] Run security audit: `openclaw security audit --deep`
 
+### Mac Mini Installation - Storage Setup
+- [ ] Format NVMe as APFS "AgentStorage"
+- [ ] Create directory structure on NVMe
+- [ ] Verify auto-mount on boot
+- [ ] Create symlinks after Step 2 (~/agents, ~/.ollama/models, ~/.openclaw/logs)
+
 ### Mac Mini Installation - OpenClaw
 - [ ] Install Node.js 22+ on Mac Mini
 - [ ] Install OpenClaw on Mac Mini

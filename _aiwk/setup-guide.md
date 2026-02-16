@@ -33,6 +33,93 @@
   - Download from: https://bluebubbles.app/downloads/
   - Requires Full Disk Access + Automation permissions
 
+### External Storage (Raycue M4 Dock + NVMe)
+
+**Hardware:**
+- Raycue M4 dock (40Gbps Thunderbolt)
+- 1TB NVMe drive
+
+**Strategy:** Selective symlinks, NOT full home directory on external.
+
+**Rationale:** If dock disconnects, system still boots and OpenClaw starts. Only high-I/O directories on NVMe.
+
+---
+
+## Step 0: Configure External Storage
+
+**Mount the NVMe:**
+
+```bash
+# Format if needed (APFS recommended)
+diskutil list  # Find the NVMe disk
+diskutil apfs createContainer /dev/diskX
+diskutil apfs addVolume diskX APFS "AgentStorage"
+
+# Verify mount
+ls /Volumes/AgentStorage
+```
+
+**Create directory structure on NVMe:**
+
+```bash
+# Create agent directories
+mkdir -p /Volumes/AgentStorage/agents/{tasks/{pending,in-progress,completed,failed},audit/{openclaw,agentzero,shared},decisions,changes,memory/context}
+
+# Create ollama models directory
+mkdir -p /Volumes/AgentStorage/ollama/models
+
+# Create openclaw logs directory
+mkdir -p /Volumes/AgentStorage/openclaw/logs
+
+# Set permissions
+chmod -R 700 /Volumes/AgentStorage/agents
+chmod -R 700 /Volumes/AgentStorage/ollama
+chmod -R 700 /Volumes/AgentStorage/openclaw
+```
+
+**Create symlinks from home:**
+
+```bash
+# Agents directory (task handoff, audit logs)
+ln -s /Volumes/AgentStorage/agents ~/agents
+
+# Ollama models (large, re-downloadable)
+mkdir -p ~/.ollama
+ln -s /Volumes/AgentStorage/ollama/models ~/.ollama/models
+
+# OpenClaw logs (after Step 2)
+# Done after ~/.openclaw directory exists
+```
+
+**What goes where:**
+
+| Path | Location | Rationale |
+|------|----------|-----------|
+| `~/.openclaw/openclaw.json` | Internal | Config must survive dock disconnect |
+| `~/.openclaw/credentials/` | Internal | Critical, small |
+| `~/.openclaw/logs/` | NVMe (symlink) | Large, recreatable |
+| `~/agents/` | NVMe (symlink) | High I/O, task handoff |
+| `~/.ollama/models/` | NVMe (symlink) | Large models (GBs) |
+
+**Auto-mount on boot:**
+
+The NVMe should auto-mount if formatted as APFS. Verify after reboot:
+
+```bash
+# Check mount
+mount | grep AgentStorage
+
+# If not auto-mounting, add to /etc/fstab or use Login Items
+```
+
+**Graceful degradation:**
+
+If dock disconnects:
+- System boots normally
+- OpenClaw starts (config on internal)
+- Error: "~/agents directory unavailable" (logged)
+- Reconnect dock → services resume
+
 ---
 
 ## Step 1: Install OpenClaw
@@ -63,6 +150,9 @@ pnpm add -g openclaw@2026.2.16
 ```bash
 mkdir -p ~/.openclaw
 chmod 700 ~/.openclaw
+
+# Symlink logs to NVMe (if using external storage)
+ln -s /Volumes/AgentStorage/openclaw/logs ~/.openclaw/logs
 ```
 
 ---
